@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Fuel Timer">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#0a0e13">
+<title>M20C Fuel Timer</title>
+<style>
+  :root{
+    --bg:#0a0e13;
+    --panel:#121821;
+    --panel-2:#182029;
+    --line:#243040;
+    --text:#e9eef3;
+    --muted:#69798d;
+    --amber:#ffab2e;
+    --green:#3ed98b;
+    --red:#ff4d4d;
+    --sys:-apple-system,'SF Pro Display',system-ui,sans-serif;
+    --mono:ui-monospace,'SF Mono',Menlo,monospace;
+  }
+  /* ---------- DAY (light) theme ---------- */
+  body.day{
+    --bg:#eef1f5;
+    --panel:#ffffff;
+    --panel-2:#f7f9fb;
+    --line:#c3ccd8;
+    --text:#131a22;
+    --muted:#5d6b7c;
+    --amber:#b06a00;
+    --green:#0f7a45;
+    --red:#c81e1e;
+  }
+  /* fills need more contrast on a light background */
+  body.day .bar{ background:#dde3ea; }
+  body.day .bar .lvl{ background:linear-gradient(180deg,#ffc75c,#e08800 55%,#a35f00); }
+  body.day .bar .lvl.g{ background:linear-gradient(180deg,#3fbf7a,#128a4d 55%,#0a5c33); }
+  body.day .bar .lvl.y{ background:linear-gradient(180deg,#f0c040,#c99000 55%,#8a6300); }
+  body.day .bar .lvl.r{ background:linear-gradient(180deg,#e85555,#c01818 55%,#8a0f0f); }
+  body.day .bar .lvl::before{ background:rgba(255,255,255,.85); }
+  body.day .bar .gr i{ background:rgba(0,0,0,.07); }
+  body.day .step{ background:#ffffff; }
+  body.day .segs button{ background:#ffffff; }
+  body.day .segs button.on{ background:rgba(176,106,0,.1); }
+  body.day .nnum{ background:rgba(176,106,0,.09); }
+  body.day .tk.on{ box-shadow:0 0 0 1px var(--amber); }
+  body.day .go,
+  body.day .btns button.swap{
+    background:linear-gradient(180deg,#f0a52e,#d98800);
+    color:#ffffff;
+  }
+  body.day .btns button.swap.urgent,
+  body.day .card button.yes{
+    background:linear-gradient(180deg,#e04b4b,#c01818);
+    color:#ffffff;
+  }
+  body.day .step button:active,
+  body.day .homebtn:active,
+  body.day .daynight:active{ background:var(--amber); color:#ffffff; }
+  body.day .tk-fd{ color:#ffffff; }
+  body.day .ovl{ background:rgba(40,50,62,.5); }
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; }
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sys);
+    overflow:hidden;
+    user-select:none;
+    -webkit-user-select:none;
+    -webkit-text-size-adjust:100%;
+  }
+  #app{
+    height:100dvh;
+    display:flex;
+    flex-direction:column;
+    padding-top:max(env(safe-area-inset-top), 4px);
+    padding-bottom:max(env(safe-area-inset-bottom), 2px);
+  }
+
+  /* ================= HEADER ================= */
+  header{
+    flex-shrink:0;
+    height:40px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:0 12px;
+    border-bottom:1px solid var(--line);
+  }
+  .nnum{
+    font-family:var(--mono);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.12em;
+    color:var(--amber);
+    border:1px solid rgba(255,171,46,.4);
+    background:rgba(255,171,46,.08);
+    border-radius:4px;
+    padding:3px 7px;
+  }
+  header h1{
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:.01em;
+    flex:1;
+    white-space:nowrap;
+    overflow:hidden;
+  }
+  .clock{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:.06em;
+    white-space:nowrap;
+  }
+  .homebtn{
+    display:none;
+    width:30px; height:30px;
+    flex-shrink:0;
+    border-radius:7px;
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    color:var(--text);
+    font-size:16px;
+    line-height:1;
+    align-items:center; justify-content:center;
+  }
+  .homebtn.show{ display:flex; }
+  .homebtn:active{ background:var(--amber); color:#1a1200; }
+
+  .daynight{
+    width:30px; height:30px;
+    flex-shrink:0;
+    border-radius:7px;
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    color:var(--text);
+    font-size:15px;
+    line-height:1;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .daynight:active{ background:var(--amber); color:#1a1200; }
+
+  /* ================= SETUP ================= */
+  #setup{
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:10px 12px 14px;
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:9px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+  .s-title{
+    font-size:19px;
+    font-weight:700;
+    line-height:1.1;
+    margin:3px 0 10px;
+  }
+  .fld{ margin-bottom:9px; }
+  .flab{
+    display:block;
+    font-family:var(--mono);
+    font-size:9px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+  /* fixed grid tracks: buttons can never crush the number */
+  .step{
+    display:grid;
+    grid-template-columns:46px 1fr 46px;
+    align-items:center;
+    gap:6px;
+    background:#05080b;
+    border:1px solid var(--line);
+    border-radius:9px;
+    padding:5px;
+  }
+  .step button{
+    height:38px;
+    border-radius:7px;
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    color:var(--text);
+    font-size:22px;
+    font-weight:400;
+    line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--sys);
+  }
+  .step button:active{ background:var(--amber); color:#1a1200; }
+  .step input{
+    width:100%;
+    min-width:0;
+    background:transparent;
+    border:none;
+    outline:none;
+    color:var(--text);
+    font-family:var(--mono);
+    font-size:23px;
+    font-weight:700;
+    text-align:center;
+    font-variant-numeric:tabular-nums;
+    padding:0;
+  }
+  .segs{ display:flex; gap:6px; }
+  .segs button{
+    flex:1;
+    min-width:0;
+    padding:12px 0;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:#05080b;
+    color:var(--muted);
+    font-family:var(--mono);
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:.05em;
+  }
+  .segs button.on{
+    border-color:var(--amber);
+    color:var(--amber);
+    background:rgba(255,171,46,.11);
+  }
+  .go{
+    width:100%;
+    margin-top:4px;
+    padding:15px 0;
+    border:none;
+    border-radius:10px;
+    background:linear-gradient(180deg,#ffc158,var(--amber));
+    color:#1a1200;
+    font-family:var(--sys);
+    font-size:16px;
+    font-weight:700;
+    letter-spacing:.02em;
+  }
+  .go:active{ filter:brightness(.92); }
+
+  /* ================= FLIGHT ================= */
+  #flight{
+    flex:1;
+    min-height:0;
+    display:none;
+    flex-direction:column;
+    padding:0 12px 12px;
+  }
+  #flight.show{ display:flex; }
+
+  .feeding{
+    flex-shrink:0;
+    text-align:center;
+    padding:12px 0 2px;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+  .feeding b{ color:var(--amber); font-weight:700; font-size:13px; }
+
+  .cd{
+    flex-shrink:0;
+    text-align:center;
+  }
+  .cd-num{
+    font-family:var(--mono);
+    font-size:clamp(56px,20vw,92px);
+    font-weight:700;
+    line-height:1;
+    letter-spacing:-.01em;
+    font-variant-numeric:tabular-nums;
+  }
+  .cd-num.warn{ color:var(--amber); }
+  .cd-num.alert{ color:var(--red); animation:blink 1s infinite; }
+  @keyframes blink{ 0%,100%{opacity:1} 50%{opacity:.3} }
+  .cd-cap{
+    font-family:var(--mono);
+    font-size:9px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-top:2px;
+  }
+  .banner{
+    display:none;
+    margin:8px auto 0;
+    padding:9px 18px;
+    border-radius:7px;
+    background:rgba(255,77,77,.15);
+    border:1px solid var(--red);
+    color:var(--red);
+    font-family:var(--mono);
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:.1em;
+    text-align:center;
+    animation:blink 1s infinite;
+  }
+  .banner.show{ display:block; }
+
+  /* tanks */
+  .tanks{
+    flex:1;
+    min-height:0;
+    display:flex;
+    gap:10px;
+    margin-top:12px;
+  }
+  .tk{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:13px;
+    padding:10px 8px 12px;
+  }
+  .tk.on{
+    border-color:var(--amber);
+    box-shadow:0 0 18px rgba(255,171,46,.15);
+  }
+  .tk-hd{
+    width:100%;
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:8px;
+  }
+  .tk-nm{
+    font-family:var(--mono);
+    font-size:12px; font-weight:700; letter-spacing:.12em;
+    color:var(--muted);
+  }
+  .tk.on .tk-nm{ color:var(--amber); }
+  .tk-fd{
+    font-family:var(--mono);
+    font-size:8px; font-weight:700; letter-spacing:.08em;
+    background:var(--green); color:#05140c;
+    border-radius:12px; padding:2px 6px;
+    visibility:hidden;
+  }
+  .tk.on .tk-fd{ visibility:visible; }
+
+  .bar{
+    flex:1;
+    min-height:0;
+    width:46px;
+    position:relative;
+    background:#04070a;
+    border:1px solid var(--line);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .bar .lvl{
+    position:absolute; left:0; right:0; bottom:0;
+    background:linear-gradient(180deg,#ffd27a,var(--amber) 55%,#c97e12);
+    transition:height .4s ease, background .4s ease;
+  }
+  /* fuel-state colors: green >10 gal, yellow 5–10, red <5 */
+  .bar .lvl.g{ background:linear-gradient(180deg,#7df0b4,#2fc978 55%,#17864b); }
+  .bar .lvl.y{ background:linear-gradient(180deg,#ffe07a,#f5c132 55%,#b8860b); }
+  .bar .lvl.r{ background:linear-gradient(180deg,#ff9b9b,#f03d3d 55%,#a51818); }
+  .bar .lvl::before{
+    content:""; position:absolute; top:0; left:0; right:0; height:2px;
+    background:rgba(255,255,255,.6);
+  }
+  .bar .gr{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; justify-content:space-between;
+    padding:6% 0; pointer-events:none;
+  }
+  .bar .gr i{ display:block; height:1px; background:rgba(255,255,255,.07); }
+
+  .tk-val{
+    font-family:var(--mono);
+    font-size:30px; font-weight:700; line-height:1;
+    font-variant-numeric:tabular-nums;
+    margin-top:10px;
+    transition:color .3s;
+  }
+  .tk-val.low{ color:var(--amber); }
+  .tk-val small{ font-size:11px; color:var(--muted); font-weight:400; margin-left:2px; }
+  .tk-sub{
+    font-family:var(--mono);
+    font-size:10px; color:var(--muted); margin-top:3px; letter-spacing:.04em;
+  }
+
+  /* totalizer */
+  .tot{
+    flex-shrink:0;
+    margin-top:10px;
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px 14px;
+  }
+  .tot.bingo{ border-color:var(--red); background:rgba(255,77,77,.09); }
+  .tot-lab{
+    font-family:var(--mono);
+    font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
+  }
+  .tot-val{
+    font-family:var(--mono);
+    font-size:32px; font-weight:700; line-height:1.05;
+    color:var(--green); font-variant-numeric:tabular-nums;
+    transition:color .3s;
+  }
+  .tot-val.red{ color:var(--red); }
+  .tot-val small{ font-size:11px; color:var(--muted); font-weight:400; margin-left:3px; }
+  .tot-r{ text-align:right; font-family:var(--mono); font-size:10px; color:var(--muted); }
+  .tot-r div{ margin:2px 0; letter-spacing:.04em; }
+  .tot-r b{ color:var(--text); font-weight:700; }
+  .tot-r .bg b{ color:var(--red); }
+
+  /* buttons */
+  .btns{
+    flex-shrink:0;
+    display:flex; gap:9px;
+    margin-top:10px;
+  }
+  .btns button{
+    border-radius:11px;
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    color:var(--text);
+    font-family:var(--sys);
+    font-size:14px; font-weight:700;
+    padding:17px 0;
+    flex:1; min-width:0;
+  }
+  .btns button.swap{
+    flex:1.85;
+    border:none;
+    background:linear-gradient(180deg,#ffc158,var(--amber));
+    color:#1a1200;
+    font-size:16px;
+  }
+  .btns button.swap.urgent{
+    background:linear-gradient(180deg,#ff7a7a,var(--red));
+    color:#1a0000;
+    animation:blink 1s infinite;
+  }
+  .btns button:active{ filter:brightness(.9); }
+
+  /* ================= MODAL ================= */
+  .ovl{
+    position:fixed; inset:0; z-index:60;
+    background:rgba(4,6,9,.75);
+    display:none; align-items:center; justify-content:center;
+    padding:22px;
+  }
+  .ovl.show{ display:flex; }
+  .card{
+    width:100%; max-width:330px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:15px;
+    padding:22px 20px;
+    text-align:center;
+  }
+  .card p{ font-size:15px; line-height:1.45; margin-bottom:18px; }
+  .card .row{ display:flex; gap:10px; }
+  .card button{
+    flex:1; padding:14px 0;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:var(--bg);
+    color:var(--muted);
+    font-family:var(--sys);
+    font-size:15px; font-weight:700;
+  }
+  .card button.yes{
+    border:none;
+    background:linear-gradient(180deg,#ff7a7a,var(--red));
+    color:#1a0000;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <button class="homebtn" id="homeBtn">⌂</button>
+    <span class="nnum">N-M20C</span>
+    <h1>Fuel Timer</h1>
+    <span class="clock" id="clock">--:--</span>
+    <button class="daynight" id="dayNightBtn">☀</button>
+  </header>
+
+  <!-- ============ SETUP ============ -->
+  <div id="setup">
+    <div class="eyebrow">Preflight</div>
+    <div class="s-title">Set starting fuel</div>
+
+    <div class="fld">
+      <span class="flab">Left tank — gallons</span>
+      <div class="step">
+        <button data-d="-1" data-t="leftQty">−</button>
+        <input type="number" id="leftQty" value="13" inputmode="decimal">
+        <button data-d="1" data-t="leftQty">+</button>
+      </div>
+    </div>
+
+    <div class="fld">
+      <span class="flab">Right tank — gallons</span>
+      <div class="step">
+        <button data-d="-1" data-t="rightQty">−</button>
+        <input type="number" id="rightQty" value="13" inputmode="decimal">
+        <button data-d="1" data-t="rightQty">+</button>
+      </div>
+    </div>
+
+    <div class="fld">
+      <span class="flab">Burn rate — GPH</span>
+      <div class="step">
+        <button data-d="-0.5" data-t="burnRate">−</button>
+        <input type="number" id="burnRate" value="10" step="0.5" inputmode="decimal">
+        <button data-d="0.5" data-t="burnRate">+</button>
+      </div>
+    </div>
+
+    <div class="fld">
+      <span class="flab">Bingo fuel — total gallons</span>
+      <div class="step">
+        <button data-d="-1" data-t="bingoQty">−</button>
+        <input type="number" id="bingoQty" value="10" inputmode="decimal">
+        <button data-d="1" data-t="bingoQty">+</button>
+      </div>
+    </div>
+
+    <div class="fld">
+      <span class="flab">Tank capacity each side — gallons</span>
+      <div class="step">
+        <button data-d="-1" data-t="capQty">−</button>
+        <input type="number" id="capQty" value="26" inputmode="decimal">
+        <button data-d="1" data-t="capQty">+</button>
+      </div>
+    </div>
+
+    <div class="fld">
+      <span class="flab">Switch interval</span>
+      <div class="segs" id="ivSeg">
+        <button class="on" data-min="30">30 MIN</button>
+        <button data-min="60">1 HOUR</button>
+      </div>
+    </div>
+
+    <div class="fld">
+      <span class="flab">Start on tank</span>
+      <div class="segs" id="stSeg">
+        <button class="on" data-side="L">LEFT</button>
+        <button data-side="R">RIGHT</button>
+      </div>
+    </div>
+
+    <button class="go" id="startBtn">Start Flight ▸</button>
+  </div>
+
+  <!-- ============ FLIGHT ============ -->
+  <div id="flight">
+    <div class="feeding">Feeding <b id="feedLbl">LEFT</b> tank</div>
+
+    <div class="cd">
+      <div class="cd-num" id="cdNum">30:00</div>
+      <div class="cd-cap">until tank switch</div>
+    </div>
+
+    <div class="banner" id="banner">SWITCH TANKS NOW</div>
+
+    <div class="tanks">
+      <div class="tk" id="tkL">
+        <div class="tk-hd"><span class="tk-nm">LEFT</span><span class="tk-fd">FEED</span></div>
+        <div class="bar">
+          <div class="gr"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="lvl g" id="lvlL" style="height:50%"></div>
+        </div>
+        <div class="tk-val" id="valL">13.0<small>GAL</small></div>
+        <div class="tk-sub" id="subL">50% · 78 MIN</div>
+      </div>
+
+      <div class="tk" id="tkR">
+        <div class="tk-hd"><span class="tk-nm">RIGHT</span><span class="tk-fd">FEED</span></div>
+        <div class="bar">
+          <div class="gr"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="lvl g" id="lvlR" style="height:50%"></div>
+        </div>
+        <div class="tk-val" id="valR">13.0<small>GAL</small></div>
+        <div class="tk-sub" id="subR">50% · 78 MIN</div>
+      </div>
+    </div>
+
+    <div class="tot" id="totBox">
+      <div>
+        <div class="tot-lab">Total remaining</div>
+        <div class="tot-val" id="totVal">26.0<small>GAL</small></div>
+      </div>
+      <div class="tot-r">
+        <div>BURN <b id="rBurn">10.0</b> GPH</div>
+        <div>ENDUR <b id="rEnd">2+36</b></div>
+        <div class="bg">BINGO <b id="rBingo">10</b> GAL</div>
+      </div>
+    </div>
+
+    <div class="btns">
+      <button id="pauseBtn">Pause</button>
+      <button class="swap" id="swapBtn">Switch Tanks</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="ovl" id="ovl">
+  <div class="card">
+    <p>Return to setup? The current flight will be cleared.</p>
+    <div class="row">
+      <button id="ovlNo">Cancel</button>
+      <button class="yes" id="ovlYes">Return</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* ---------- steppers ---------- */
+  document.querySelectorAll('.step button').forEach(function(b){
+    b.addEventListener('click', function(){
+      var inp = $(b.dataset.t);
+      var v = parseFloat(inp.value) || 0;
+      v = Math.max(0, Math.round((v + parseFloat(b.dataset.d)) * 10) / 10);
+      inp.value = v;
+    });
+  });
+
+  /* ---------- segmented controls ---------- */
+  var ivMin = 30, startSide = 'L';
+  $('ivSeg').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    this.querySelectorAll('button').forEach(function(x){ x.classList.remove('on'); });
+    b.classList.add('on'); ivMin = parseInt(b.dataset.min,10);
+  });
+  $('stSeg').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    this.querySelectorAll('button').forEach(function(x){ x.classList.remove('on'); });
+    b.classList.add('on'); startSide = b.dataset.side;
+  });
+
+  /* ---------- clock ---------- */
+  function clk(){ $('clock').textContent = new Date().toTimeString().slice(0,5) + ' LT'; }
+  clk(); setInterval(clk, 20000);
+
+  /* ---------- state ---------- */
+  var st = null, raf = null, wake = null;
+
+  function mmss(ms){
+    var t = Math.max(0, Math.ceil(ms/1000));
+    return String(Math.floor(t/60)).padStart(2,'0') + ':' + String(t%60).padStart(2,'0');
+  }
+  function hhmm(mins){
+    mins = Math.max(0, Math.floor(mins));
+    return Math.floor(mins/60) + '+' + String(mins%60).padStart(2,'0');
+  }
+
+  function beep(){
+    try{
+      var c = new (window.AudioContext||window.webkitAudioContext)();
+      [0,.3,.6].forEach(function(off){
+        var o=c.createOscillator(), g=c.createGain();
+        o.type='square'; o.frequency.value=880; g.gain.value=.07;
+        o.connect(g); g.connect(c.destination);
+        o.start(c.currentTime+off); o.stop(c.currentTime+off+.18);
+      });
+    }catch(e){}
+  }
+
+  async function lockScreen(){
+    try{ if('wakeLock' in navigator){ wake = await navigator.wakeLock.request('screen'); } }catch(e){}
+  }
+
+  function elapsed(){
+    if(!st) return 0;
+    return st.paused ? st.legMs : st.legMs + (Date.now() - st.ts);
+  }
+
+  function start(){
+    var L = Math.max(0, parseFloat($('leftQty').value)||0);
+    var R = Math.max(0, parseFloat($('rightQty').value)||0);
+    st = {
+      cap:   Math.max(1, parseFloat($('capQty').value)||26),
+      burn:  Math.max(.1, parseFloat($('burnRate').value)||10),
+      bingo: Math.max(0, parseFloat($('bingoQty').value)||0),
+      ivMs:  ivMin*60000,
+      act:   startSide,
+      q:     { L:L, R:R },
+      legQ:  startSide==='L' ? L : R,
+      legMs: 0,
+      ts:    Date.now(),
+      run:   true,
+      paused:false,
+      dinged:false
+    };
+    $('rBurn').textContent  = st.burn.toFixed(1);
+    $('rBingo').textContent = String(st.bingo).replace(/\.0$/,'');
+    $('setup').style.display = 'none';
+    $('flight').classList.add('show');
+    $('homeBtn').classList.add('show');
+    $('pauseBtn').textContent = 'Pause';
+    lockScreen();
+    loop();
+  }
+
+  function draw(){
+    var el = elapsed();
+    var perMs = st.burn/3600000;
+    var actQ = Math.max(0, st.legQ - perMs*el);
+    var left = Math.max(0, st.ivMs - el);
+    var other = st.act==='L' ? 'R' : 'L';
+
+    var q = {};
+    q[st.act] = actQ;
+    q[other]  = st.q[other];
+
+    ['L','R'].forEach(function(s){
+      var pct = Math.max(0, Math.min(100, q[s]/st.cap*100));
+      var lvl = $('lvl'+s);
+      lvl.style.height = pct + '%';
+      // green above 10 gal, yellow 5–10, red below 5
+      lvl.classList.toggle('g', q[s] > 10);
+      lvl.classList.toggle('y', q[s] >= 5 && q[s] <= 10);
+      lvl.classList.toggle('r', q[s] < 5);
+      var v = $('val'+s);
+      v.innerHTML = q[s].toFixed(1) + '<small>GAL</small>';
+      v.classList.toggle('low', q[s] < 10);
+      $('sub'+s).textContent = Math.round(pct) + '% · ' + Math.round(q[s]/st.burn*60) + ' MIN';
+      $('tk'+s).classList.toggle('on', st.act===s);
+    });
+
+    $('feedLbl').textContent = st.act==='L' ? 'LEFT' : 'RIGHT';
+
+    var tot = q.L + q.R;
+    $('totVal').innerHTML = tot.toFixed(1) + '<small>GAL</small>';
+    $('totVal').classList.toggle('red', tot <= st.bingo);
+    $('totBox').classList.toggle('bingo', tot <= st.bingo);
+    $('rEnd').textContent = hhmm(tot/st.burn*60);
+
+    var n = $('cdNum');
+    n.textContent = mmss(left);
+    n.classList.toggle('warn', left>0 && left<=60000);
+    n.classList.toggle('alert', left<=0);
+
+    if(left<=0){
+      $('banner').classList.add('show');
+      $('swapBtn').classList.add('urgent');
+      if(!st.dinged){
+        st.dinged = true;
+        beep();
+        if(navigator.vibrate) navigator.vibrate([200,120,200,120,200]);
+      }
+    }else{
+      $('banner').classList.remove('show');
+      $('swapBtn').classList.remove('urgent');
+    }
+  }
+
+  function loop(){
+    if(!st || !st.run) return;
+    draw();
+    raf = requestAnimationFrame(loop);
+  }
+
+  function swap(){
+    if(!st) return;
+    var perMs = st.burn/3600000;
+    st.q[st.act] = Math.max(0, st.legQ - perMs*elapsed());
+    st.act  = st.act==='L' ? 'R' : 'L';
+    st.legQ = st.q[st.act];
+    st.legMs = 0;
+    st.ts = Date.now();
+    st.dinged = false;
+    $('banner').classList.remove('show');
+    $('swapBtn').classList.remove('urgent');
+    draw();
+  }
+
+  function pause(){
+    if(!st) return;
+    if(st.paused){
+      st.paused = false; st.ts = Date.now();
+      $('pauseBtn').textContent = 'Pause';
+      lockScreen(); loop();
+    }else{
+      st.legMs = elapsed(); st.paused = true;
+      $('pauseBtn').textContent = 'Resume';
+      cancelAnimationFrame(raf);
+    }
+  }
+
+  function home(){
+    if(st){ st.run = false; cancelAnimationFrame(raf); }
+    st = null;
+    if(wake){ try{ wake.release(); }catch(e){} wake = null; }
+    $('flight').classList.remove('show');
+    $('homeBtn').classList.remove('show');
+    $('setup').style.display = 'block';
+  }
+
+  $('startBtn').addEventListener('click', function(){ goFullscreen(); start(); });
+  $('swapBtn').addEventListener('click', swap);
+  $('pauseBtn').addEventListener('click', pause);
+  $('homeBtn').addEventListener('click', function(){ if(st) $('ovl').classList.add('show'); });
+  $('ovlNo').addEventListener('click', function(){ $('ovl').classList.remove('show'); });
+  $('ovlYes').addEventListener('click', function(){ $('ovl').classList.remove('show'); home(); });
+
+  /* ---------- offline install ---------- */
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){ /* non-fatal */ });
+    });
+  }
+
+  /* ---------- full screen ---------- */
+  // Standalone (Add to Home Screen) is the only true full screen on iPhone.
+  // The Fullscreen API below covers iPad, Android and desktop browsers.
+  var isStandalone = window.navigator.standalone === true ||
+                     (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+
+  function goFullscreen(){
+    if(isStandalone) return;                 // already chrome-free
+    var el = document.documentElement;
+    var fn = el.requestFullscreen || el.webkitRequestFullscreen ||
+             el.webkitRequestFullScreen || el.mozRequestFullScreen ||
+             el.msRequestFullscreen;
+    if(fn){ try{ fn.call(el, { navigationUI:'hide' }); }catch(e){ try{ fn.call(el); }catch(e2){} } }
+  }
+
+  // Fullscreen must be triggered by a user gesture, so hook the first tap.
+  document.addEventListener('click', function once(){
+    goFullscreen();
+    document.removeEventListener('click', once);
+  }, true);
+
+  // Nudge Safari's address bar out of the way on non-standalone loads.
+  if(!isStandalone){
+    window.addEventListener('load', function(){
+      setTimeout(function(){ window.scrollTo(0,1); }, 80);
+    });
+  }
+
+  /* ---------- day / night theme ---------- */
+  var dayMode = false;
+  try{ dayMode = localStorage.getItem('m20c-day') === '1'; }catch(e){}
+
+  function applyTheme(){
+    document.body.classList.toggle('day', dayMode);
+    $('dayNightBtn').textContent = dayMode ? '☾' : '☀';
+    var mt = document.querySelector('meta[name="theme-color"]');
+    if(mt) mt.setAttribute('content', dayMode ? '#eef1f5' : '#0a0e13');
+  }
+  applyTheme();
+
+  $('dayNightBtn').addEventListener('click', function(){
+    dayMode = !dayMode;
+    try{ localStorage.setItem('m20c-day', dayMode ? '1' : '0'); }catch(e){}
+    applyTheme();
+  });
+
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState==='visible' && st){
+      if(st.run && !st.paused) lockScreen();
+      draw();
+    }
+  });
+})();
+</script>
+</body>
+</html>
