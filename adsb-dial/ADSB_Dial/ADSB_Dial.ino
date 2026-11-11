@@ -1,11 +1,14 @@
 // ADS-B Dial: standalone 1090 MHz traffic display on the Elecrow CrowPanel 2.1" rotary.
 // ADVISORY ONLY. Not a certified instrument. Never a substitute for see-and-avoid.
 //
-// v1.1: serial hello world only. Proves the new sketch is on the board and the
-// version number reads back. The screen is not driven yet, so it stays dark.
+// v1.2: screen on. Startup splash with version, advisory notice and a color test ring.
 
 #include <Arduino.h>
 #include "version.h"
+#include "display.h"
+#include "splash.h"
+
+static bool displayOk = false;
 
 static void printBanner() {
   Serial.println();
@@ -28,12 +31,19 @@ void setup() {
   unsigned long t0 = millis();
   while (!Serial && millis() - t0 < 3000) delay(10);
   printBanner();
+
+  displayOk = displayBegin();
+  if (displayOk) {
+    splashDraw();
+    Serial.println("Splash drawn");
+  }
 }
 
 void loop() {
   static unsigned long last = 0;
   if (millis() - last >= 2000) {
     last = millis();
-    Serial.printf("v%s alive, uptime %lu s\n", FW_VERSION, millis() / 1000);
+    Serial.printf("v%s alive, uptime %lu s, display %s\n", FW_VERSION,
+                  millis() / 1000, displayOk ? "OK" : "FAILED");
   }
 }
