@@ -26,6 +26,23 @@ running ForeFlight can use it as a traffic source.
    files so each can be tested alone.
 6. State uncertainty plainly. Do not present unproven feasibility as settled.
 
+## Workflow (agreed with Brady)
+- Priority is speed. Claude Code writes all the code. No Codex unless Claude hits a roadblock
+  or Brady decides he prefers its workflow.
+- Toolchain: Arduino IDE on Brady's Windows PC (he has built many projects in it). Add
+  arduino-cli alongside it so Claude Code can compile; it shares the IDE's boards and libraries.
+- Versions are numbered by stage and edit: 1.1, 1.2, 1.3, then 2.1 and so on. Each version is
+  saved as its own sketch folder, `ADSB_Dial_vX.Y/ADSB_Dial_vX.Y.ino` (Arduino needs the folder
+  name to match the .ino). Also commit each version and tag it `vX.Y`.
+- Every version ships with a short test checklist covering only what that version changed.
+  Brady installs it, runs the checklist and reports "worked" or "didn't work" (with any error
+  text). Do not start the next version until he reports back.
+- Keep `VERSION_LOG.md` up to date: one entry per version saying what changed, its checklist,
+  and Brady's test result.
+- Graphics: render every UI change as an image (480x480, round mask) and show it to Brady
+  BEFORE writing the device code. Iterate on the image until he approves it, then write the code.
+  Say plainly that a mockup is an approximation of what LVGL will draw.
+
 ## Safety framing (non-negotiable)
 - This is a portable advisory aid, not a certified instrument, not installed equipment, and
   never a substitute for see-and-avoid or certified traffic systems.
