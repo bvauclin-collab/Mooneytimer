@@ -2,6 +2,7 @@
 // ADVISORY ONLY. Not a certified instrument. Never a substitute for see-and-avoid.
 //
 // v1.2: screen on. Startup splash with version, advisory notice and a color test ring.
+// v1.3: red/blue color swap fixed.
 
 #include <Arduino.h>
 #include "version.h"

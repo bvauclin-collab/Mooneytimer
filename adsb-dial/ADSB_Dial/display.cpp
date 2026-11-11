@@ -24,11 +24,14 @@ static bool pcfSetBit(uint8_t bit, bool high) {
 static Arduino_DataBus *st7701Bus = new Arduino_SWSPI(
     GFX_NOT_DEFINED, PIN_LCD_CS, PIN_LCD_SCK, PIN_LCD_MOSI, GFX_NOT_DEFINED);
 
+// v1.3: the red and blue pin groups are passed swapped. With the order from Brady's
+// baseline sketch, v1.2 showed red as blue and blue as red on the real panel.
+// (The baseline's R/B pin labels are likely reversed; check against the schematic in Stage 2.)
 static Arduino_ESP32RGBPanel *rgbPanel = new Arduino_ESP32RGBPanel(
     PIN_LCD_DE, PIN_LCD_VSYNC, PIN_LCD_HSYNC, PIN_LCD_PCLK,
-    PIN_LCD_R0, PIN_LCD_R1, PIN_LCD_R2, PIN_LCD_R3, PIN_LCD_R4,
-    PIN_LCD_G0, PIN_LCD_G1, PIN_LCD_G2, PIN_LCD_G3, PIN_LCD_G4, PIN_LCD_G5,
     PIN_LCD_B0, PIN_LCD_B1, PIN_LCD_B2, PIN_LCD_B3, PIN_LCD_B4,
+    PIN_LCD_G0, PIN_LCD_G1, PIN_LCD_G2, PIN_LCD_G3, PIN_LCD_G4, PIN_LCD_G5,
+    PIN_LCD_R0, PIN_LCD_R1, PIN_LCD_R2, PIN_LCD_R3, PIN_LCD_R4,
     1, 20, 10, 10,           // HSYNC polarity, front porch, pulse width, back porch
     1, 8, 10, 10,            // VSYNC polarity, front porch, pulse width, back porch
     1, 18000000UL, false,    // PCLK active edge, 18 MHz, no DE idle high

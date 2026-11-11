@@ -6,6 +6,7 @@ One entry per version. Brady reports each result before work moves on.
 |---|---|---|---|
 | 1.1 | 2026-11-11 | New ADSB_Dial sketch replaces old firmware; serial hello + version | WORKED |
 | 1.2 | 2026-11-11 | Screen on: startup splash with version, advisory notice, color test ring | PARTLY: red and blue swapped |
+| 1.3 | 2026-11-11 | Fix red/blue swap (R and B pin groups swapped in display setup) | WORKED |
 
 ## v1.1 — 2026-11-11
 **Changed:** First ADSB_Dial sketch (`ADSB_Dial.ino` + `version.h`). Serial only: prints the
@@ -35,6 +36,16 @@ clockwise from the top). Serial "alive" line now also says whether the display i
 position all good. Ring colors from 12 o'clock came out royal blue, green, red, white, light blue
 instead of red, green, blue, white, amber: red and blue are swapped (amber turns light blue for
 the same reason). Fixed in v1.3.
+
+## v1.3 — 2026-11-11
+**Changed:** `display.cpp` passes the blue pins where the red pins were and vice versa, so
+colors come out right. Nothing else changed. Compiles clean.
+**Test checklist:**
+- [ ] Close Serial Monitor, press Upload in the IDE.
+- [ ] Startup screen shows "v1.3".
+- [ ] Ring from 12 o'clock, clockwise: red, green, blue, white, amber.
+- [ ] ADVISORY ONLY box is dark amber/brown with amber text (not blue).
+**Result:** WORKED (2026-11-11). Brady confirms the colors are correct.
 
 <!-- Entry template
 ## vX.Y — YYYY-MM-DD
