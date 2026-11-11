@@ -49,6 +49,23 @@ running ForeFlight can use it as a traffic source.
   BEFORE writing the device code. Iterate on the image until he approves it, then write the code.
   Say plainly that a mockup is an approximation of what LVGL will draw.
 
+## Toolchain (found on the PC, 2026-11-11)
+- arduino-cli 1.5.1 is bundled inside Arduino IDE 2 at
+  `%LOCALAPPDATA%\Programs\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe`;
+  use it with `--config-file C:/Users/Acer/.arduinoIDE/arduino-cli.yaml` so it shares the IDE's
+  cores and libraries. `tools/build.sh [COMx]` wraps compile (+ upload). A clean build takes ~2 min.
+- Core: esp32:esp32 3.3.12. Elecrow's readme asks for 2.0.14, but Brady's working CrowPanel
+  sketches (M20C Cockpit Companion, `Documents\CrowPanel21_ST7701_WORKING_BASELINE`) run on
+  3.3.12 with Arduino_GFX 1.6.9 + Adafruit_CST8XX, no LVGL. That baseline compiles via the CLI.
+- Board settings (from his working builds): ESP32S3 Dev Module, 16 MB flash, Huge APP, OPI PSRAM,
+  USB CDC On Boot enabled, 921600 upload.
+- Known pins (from his working sketch, still to cross-check against the schematic in Stage 2):
+  I2C SDA 38 / SCL 39, PCF8574 at 0x21 (touch reset P0, touch int P2, LCD power P3, LCD reset P4,
+  encoder press P5), encoder A 42 / B 4, backlight 6, ST7701 SPI CS 16 / SCK 2 / MOSI 1.
+- LVGL not ready: the installed lvgl is 9.6.0 but the shared `libraries/lv_conf.h` is for v8.4,
+  and Elecrow's examples use LVGL 8.3. Decide before Stage 7; changing shared libraries could
+  break Brady's other projects.
+
 ## Safety framing (non-negotiable)
 - This is a portable advisory aid, not a certified instrument, not installed equipment, and
   never a substitute for see-and-avoid or certified traffic systems.
