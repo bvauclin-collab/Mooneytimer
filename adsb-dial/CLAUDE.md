@@ -31,9 +31,15 @@ running ForeFlight can use it as a traffic source.
   or Brady decides he prefers its workflow.
 - Toolchain: Arduino IDE on Brady's Windows PC (he has built many projects in it). Add
   arduino-cli alongside it so Claude Code can compile; it shares the IDE's boards and libraries.
-- Versions are numbered by stage and edit: 1.1, 1.2, 1.3, then 2.1 and so on. Each version is
-  saved as its own sketch folder, `ADSB_Dial_vX.Y/ADSB_Dial_vX.Y.ino` (Arduino needs the folder
-  name to match the .ino). Also commit each version and tag it `vX.Y`.
+- ONE working sketch, `ADSB_Dial/ADSB_Dial.ino` (plus its module files), stays open in the
+  Arduino IDE. Claude edits those files in place on disk; the IDE picks up the change and Brady
+  just presses Upload. Never make him open a new sketch or a second IDE window per version.
+  Brady should not type in the IDE while Claude is editing, or the two copies will conflict.
+- Versions are numbered by stage and edit: 1.1, 1.2, 1.3, then 2.1 and so on. The version
+  number lives in the code (a `FW_VERSION` constant, shown on the startup screen and printed to
+  serial) so Brady can confirm which version is on the device.
+- Saved copies of each version: commit and tag it `vX.Y` in git, and copy the sketch to
+  `versions/vX.Y/` as a backup to roll back to. These copies are never opened in the IDE.
 - Every version ships with a short test checklist covering only what that version changed.
   Brady installs it, runs the checklist and reports "worked" or "didn't work" (with any error
   text). Do not start the next version until he reports back.
