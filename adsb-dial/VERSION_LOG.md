@@ -7,6 +7,7 @@ One entry per version. Brady reports each result before work moves on.
 | 1.1 | 2026-11-11 | New ADSB_Dial sketch replaces old firmware; serial hello + version | WORKED |
 | 1.2 | 2026-11-11 | Screen on: startup splash with version, advisory notice, color test ring | PARTLY: red and blue swapped |
 | 1.3 | 2026-11-11 | Fix red/blue swap (R and B pin groups swapped in display setup) | WORKED |
+| 1.4 | 2026-11-11 | Knob and press test screen (mockup Option B) after a 3 s splash | WORKED |
 
 ## v1.1 — 2026-11-11
 **Changed:** First ADSB_Dial sketch (`ADSB_Dial.ino` + `version.h`). Serial only: prints the
@@ -46,6 +47,21 @@ colors come out right. Nothing else changed. Compiles clean.
 - [ ] Ring from 12 o'clock, clockwise: red, green, blue, white, amber.
 - [ ] ADVISORY ONLY box is dark amber/brown with amber text (not blue).
 **Result:** WORKED (2026-11-11). Brady confirms the colors are correct.
+
+## v1.4 — 2026-11-11
+**Changed:** New `input.h/.cpp` (knob on GPIO 42/4 by interrupt, 2 transitions per detent,
+clockwise positive; press on PCF8574 bit 5, debounced 30 ms) and `knobtest.h/.cpp` (24-tick
+ring, amber marker, signed count, press box that flashes). Splash shows 3 s, then the test
+screen. Each click and press is printed to Serial; the "alive" line is now every 10 s.
+**Test checklist:**
+- [ ] Close Serial Monitor, press Upload. Splash shows "v1.4" for about 3 s, then "KNOB TEST v1.4".
+- [ ] Turn clockwise one click: marker moves one tick clockwise, count goes to +1.
+- [ ] Counter-clockwise: marker moves back, count goes down (negative past zero).
+- [ ] Turn 24 clicks one way: marker lands back on the gray 12 o'clock dot, count +24 or -24.
+- [ ] Turn fast: no skipped or doubled clicks (count matches clicks felt).
+- [ ] Press the knob: PRESSES goes up by exactly 1 and the box flashes. Holding it counts once.
+- [ ] Serial Monitor shows a "knob" line per click and a "press #" line per press.
+**Result:** WORKED (2026-11-11). Stage 1 (hello world, display, knob and press) complete.
 
 <!-- Entry template
 ## vX.Y — YYYY-MM-DD

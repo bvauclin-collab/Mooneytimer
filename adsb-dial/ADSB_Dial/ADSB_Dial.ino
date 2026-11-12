@@ -3,11 +3,16 @@
 //
 // v1.2: screen on. Startup splash with version, advisory notice and a color test ring.
 // v1.3: red/blue color swap fixed.
+// v1.4: knob and press test screen after the splash.
 
 #include <Arduino.h>
 #include "version.h"
 #include "display.h"
 #include "splash.h"
+#include "input.h"
+#include "knobtest.h"
+
+#define SPLASH_MS 3000
 
 static bool displayOk = false;
 
@@ -34,15 +39,20 @@ void setup() {
   printBanner();
 
   displayOk = displayBegin();
+  inputBegin();
   if (displayOk) {
     splashDraw();
     Serial.println("Splash drawn");
+    delay(SPLASH_MS);
+    knobTestBegin();
   }
 }
 
 void loop() {
+  if (displayOk) knobTestUpdate();
+
   static unsigned long last = 0;
-  if (millis() - last >= 2000) {
+  if (millis() - last >= 10000) {
     last = millis();
     Serial.printf("v%s alive, uptime %lu s, display %s\n", FW_VERSION,
                   millis() / 1000, displayOk ? "OK" : "FAILED");
